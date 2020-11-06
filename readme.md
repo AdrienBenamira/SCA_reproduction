@@ -1,5 +1,7 @@
 # Reproduction SCA TCHES 2020
 
+Original implem: https://github.com/KULeuven-COSIC/TCHES20V3_CNN_SCA
+
 ## TODO
 
 ### General
