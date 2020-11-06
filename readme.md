@@ -1,0 +1,37 @@
+# Reproduction SCA TCHES 2020
+
+## TODO
+
+### General
+
+Implements the different models of the general repo in Pytorch for the 4 datasets in the different configuration
+
+### Particular
+
+[1] incorporate reproductibility
+
+[2] incorporate the prepocessings
+
+[3] incorporate the test dataloader
+
+[4]incorporate multiples loss-optimizer-models
+
+[5]incorporate visualisation
+
+[5]reproduce the results of the paper
+
+### Others
+
+[1] incorporate interpretability with Captum library
+
+[2] incorporate the plain text feature
+
+
+## Links
+
+Blog general: https://pytorch.org/tutorials/
+
+DataLoader: https://pytorch.org/tutorials/beginner/data_loading_tutorial.html?highlight=dataloader
+
+Tensorboard: https://pytorch.org/tutorials/intermediate/tensorboard_tutorial.html
+

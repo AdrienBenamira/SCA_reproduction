@@ -1,0 +1,17 @@
+general:
+  seed: 0
+  device: 0
+  logs_tensorboard: ./results/test_v2/
+  ascad_database_file: ./data/ASCAD_dataset/ASCAD.h5
+
+dataloader:
+  batch_size: 4
+  num_workers: 2
+  shuffle: True
+
+train:
+  epochs: 5
+  lr: 0.001
+  momentum: 0.9
+
+
