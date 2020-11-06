@@ -2,6 +2,10 @@
 
 Original implem: https://github.com/KULeuven-COSIC/TCHES20V3_CNN_SCA
 
+## Prerequest
+
+Add a folder data with the datasets in the repo
+
 ## TODO
 
 ### General
