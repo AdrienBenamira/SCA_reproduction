@@ -9,3 +9,5 @@ class ToTensor(object):
 
         return {'trace': torch.from_numpy(trace),
                 'sensitive': torch.from_numpy(np.array([sensitive]))}
+
+

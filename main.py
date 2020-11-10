@@ -1,7 +1,7 @@
 
 import warnings
 from torchvision import transforms, utils
-from src.DataLoader import AscadDataLoader_train
+from src.DataLoader import AscadDataLoader_train, AscadDataLoader_test
 from src.Preprocessing import ToTensor
 from src.net import Net
 import torch
@@ -20,14 +20,21 @@ config = Config()
 
 #TODO: incorporate the prepocessing of the Github
 compose = transforms.Compose([  ToTensor() ])
-
+#TODO:
 
 #LOAD trainset
 trainset = AscadDataLoader_train(config, transform=compose)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=config.dataloader.batch_size,
                                           shuffle=config.dataloader.shuffle,
                                           num_workers=config.dataloader.num_workers)
-#TODO: the test one
+print(len(trainset))
+print(len(trainloader))
+
+testset = AscadDataLoader_test(config, transform=compose)
+testloader = torch.utils.data.DataLoader(testset, batch_size=config.dataloader.batch_size,
+                                          shuffle=config.dataloader.shuffle,
+                                          num_workers=config.dataloader.num_workers)
+
 
 
 #TODO: Change the model for the one of the paper

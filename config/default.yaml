@@ -2,11 +2,11 @@ general:
   seed: 0
   device: 0
   logs_tensorboard: ./results/test_v2/
-  ascad_database_file: ./data/ASCAD_dataset/ASCAD.h5
+  ascad_database_file: ./datasets/ASCAD_dataset/ASCAD.h5
 
 dataloader:
-  batch_size: 4
-  num_workers: 2
+  batch_size: 10
+  num_workers: 1
   shuffle: True
 
 train:
