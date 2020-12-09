@@ -16,15 +16,16 @@ Implements the different models of the general repo in Pytorch for the 4 dataset
 
 [1] incorporate reproductibility
 
-[2] incorporate the prepocessings
+[2] incorporate the prepocessings and incorporate the test dataloader: <br>
+    * Finished up feature scaling by implementing methods in the dataloader. <br>
+    * Finished up horiztonal scaling by implementing classes regarding them. <br>
+    * Implemented test dataloader to work with the above preprocessing.
 
-[3] incorporate the test dataloader
+[3] incorporate multiples loss-optimizer-models
 
-[4]incorporate multiples loss-optimizer-models
+[4] incorporate visualisation
 
-[5]incorporate visualisation
-
-[5]reproduce the results of the paper
+[5] reproduce the results of the paper
 
 ### Others
 
