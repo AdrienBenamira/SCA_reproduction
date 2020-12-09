@@ -69,10 +69,10 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=config.dataloader.b
 # for i in range(len(trainset)):
 #     print(trainset[i])
 
-print("Testset:")
-for i in range(len(testset)):
-    print("testset " + str(i))
-    print(testset[i])
+# print("Testset:")
+# for i in range(len(testset)):
+#     print("testset " + str(i))
+#     print(testset[i])
 
 
 
@@ -99,13 +99,12 @@ for epoch in range(config.train.epochs):  # loop over the dataset multiple times
         optimizer.zero_grad()
 
         # forward + backward + optimize
-        for trace in inputs:
-            outputs = net(trace)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            # print statistics
-            running_loss += loss.item()
+        outputs = net(inputs)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        # print statistics
+        running_loss += loss.item()
 
         if i % 2000 == 1999:    # print every 2000 mini-batches
             print('[%d, %5d] loss: %.3f' %

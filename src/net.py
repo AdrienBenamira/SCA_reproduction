@@ -23,7 +23,9 @@ class Net(nn.Module): ##noConv1 ascad_desync 50
 
     def forward(self, x):
         # Averagepool first
-        x = F.avg_pool1d(x.view(1,1,700), kernel_size = 2, stride=2)
+        x = x.unsqueeze(1) #turning (Batch x length sequence) -> (Batch x channel = 1 x length sequence)
+        x = F.avg_pool1d(x, kernel_size = 2, stride=2)
+
         # first convolutional layer
         x = F.avg_pool1d(self.bn1(F.selu(self.conv1(x))), kernel_size = 25, stride =25)
         # second convolutional
