@@ -49,16 +49,19 @@ elif config.dataloader.scaling == "feature_standardization":
     trainset = AscadDataLoader_train(config, transform=compose)
     trainset.feature_standardization()
 
-
-
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=config.dataloader.batch_size,
                                           shuffle=config.dataloader.shuffle,
                                           num_workers=config.dataloader.num_workers)
 
+if config.dataloader.scaling == "horizontal_scale_0_1":
+    testset = AscadDataLoader_test(config, transform=Horizontal_scale_0_1)
+elif config.dataloader.scaling == "horizontal_scale_m1_1":
+    testset = AscadDataLoader_test(config, transform=Horizontal_scale_m1_1)
+else:
+    scaler = trainset.get_feature_scaler()
+    testset= AscadDataLoader_test(config, transform=compose, feature_scaler=scaler)
+    testset.feature_scaling()
 
-scaler = trainset.get_feature_scaler()
-testset= AscadDataLoader_test(config, transform=compose, feature_scaler=scaler)
-testset.feature_scaling()
 testloader = torch.utils.data.DataLoader(testset, batch_size=config.dataloader.batch_size,
                                          shuffle=config.dataloader.shuffle,
                                         num_workers=config.dataloader.num_workers)

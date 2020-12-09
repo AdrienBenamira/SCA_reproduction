@@ -5,7 +5,7 @@ general:
   ascad_database_file: ./datasets/ASCAD_dataset/ASCAD_dataset/ASCAD.h5
 
 dataloader:
-  scaling: feature_scaling_m1_1
+  scaling: horizontal_scale_m1_1
   batch_size: 4
   num_workers: 0
   shuffle: True
