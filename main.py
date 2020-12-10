@@ -49,6 +49,8 @@ elif config.dataloader.scaling == "feature_standardization":
     trainset = AscadDataLoader_train(config, transform=compose)
     trainset.feature_standardization()
 
+#trainset.to_categorical(num_classes=256)
+
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=config.dataloader.batch_size,
                                           shuffle=config.dataloader.shuffle,
                                           num_workers=config.dataloader.num_workers)
@@ -62,29 +64,33 @@ else:
     testset= AscadDataLoader_test(config, transform=compose, feature_scaler=scaler)
     testset.feature_scaling()
 
+#testset.to_categorical(num_classes=256)
 testloader = torch.utils.data.DataLoader(testset, batch_size=config.dataloader.batch_size,
                                          shuffle=config.dataloader.shuffle,
                                         num_workers=config.dataloader.num_workers)
 # print("Trainset:")
 # for i in range(len(trainset)):
-#     print(trainset[i])
+# #     print(trainset[i])
+#      print(trainset[i]["sensitive"])
 
 # print("Testset:")
 # for i in range(len(testset)):
 #     print("testset " + str(i))
-#     print(testset[i])
+#     print(testset[i]["sensitive"])
 
 
 
 #TODO: Change the model for the one of the paper
 net = Net()
 
-
 #TODO: propose multiple loss and optimizer
 criterion = nn.MSELoss()
+if config.train.criterion == "Categorical Cross Entropy Loss":
+    criterion = nn.NLLLoss()
+
 optimizer = optim.SGD(net.parameters(), lr=config.train.lr, momentum=config.train.momentum)
-
-
+if config.train.optimizer == "Adam":
+    optimizer = optim.Adam(net.parameters(), lr=config.train.lr)
 
 # TODO: plot in tensorboard the curves loss and accuracy for train and val
 for epoch in range(config.train.epochs):  # loop over the dataset multiple times
@@ -93,13 +99,16 @@ for epoch in range(config.train.epochs):  # loop over the dataset multiple times
         # get the inputs; data is a list of [inputs, labels]
         inputs, labels = data["trace"].float(), data["sensitive"].float()
 
-
-
         # zero the parameter gradients
         optimizer.zero_grad()
 
         # forward + backward + optimize
         outputs = net(inputs)
+        labels = labels.view(4).long() ##This is because NLLLoss only take in this form.
+        outputs = torch.log(outputs)
+        print(outputs)
+        print(outputs.shape, labels.shape)
+        print(labels)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()

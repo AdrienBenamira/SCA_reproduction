@@ -43,6 +43,9 @@ class AscadDataLoader_train(Dataset):
 
         return sample
 
+    def to_categorical(self, num_classes):
+        self.Y_profiling = np.eye(num_classes, dtype='uint8')[self.Y_profiling]
+
     def feature_min_max_scaling(self, a, b):
         scaler = preprocessing.MinMaxScaler(feature_range=(a, b))
         self.X_profiling = scaler.fit_transform(self.X_profiling)
@@ -53,7 +56,6 @@ class AscadDataLoader_train(Dataset):
         self.X_profiling = scaler.fit_transform(self.X_profiling)
         self.feature_scaler = scaler
 
-
     def get_feature_scaler(self):
         return self.feature_scaler
 
@@ -61,7 +63,7 @@ class AscadDataLoader_test(Dataset):
 
     def __init__(self, config, transform=None, feature_scaler = None):
         self.config = config
-        _, _, self.X_attack, self.target, self.real_key = load_ascad(config.general.ascad_database_file)
+        _, _, self.X_attack, self.targets, self.real_key = load_ascad(config.general.ascad_database_file)
         self.transform = transform
         self.feature_scaler = feature_scaler
 
@@ -73,13 +75,17 @@ class AscadDataLoader_test(Dataset):
             idx = idx.tolist()
 
         trace = self.X_attack[idx]
-        sensitive = self.target[idx]
-        sample = {'trace': trace, 'sensitive': sensitive}
+        target = self.targets[idx] ##All possible S(key xor x) for all the 256 keys.
+        sample = {'trace': trace, 'target': target}
 
         if self.transform:
             sample = self.transform(sample)
 
         return sample
+
+    def to_categorical(self, num_classes):
+        self.targets = np.eye(num_classes, dtype='uint8')[self.targets]
+
 
     def feature_scaling(self, feature_scaler = None):
         if self.feature_scaler == None and feature_scaler == None:
@@ -88,3 +94,20 @@ class AscadDataLoader_test(Dataset):
             self.X_attack = feature_scaler.transform(self.X_attack)
         else:
             self.X_attack = self.feature_scaler.transform(self.X_attack)
+
+    def rank(self, ModelPredictions, key,ntraces, interval = 10):
+        ranktime = np.zeros(int(ntraces / interval))
+        pred = np.zeros(256)
+
+        idx = np.random.randint(ModelPredictions.shape[0], size=ntraces)
+
+        for i, p in enumerate(idx):
+            for k in range(ModelPredictions.shape[1]):
+                pred[k] += ModelPredictions[p, self.targets[p, k]]
+
+            if i % interval == 0:
+                ranked = np.argsort(pred)[::-1]
+                ranktime[int(i / interval)] = list(ranked).index(key)
+        return ranktime
+
+    #TODO: def evualuteModel try to understand what it is doing and how it link with the rank function above.
