@@ -1,5 +1,5 @@
 '''
-Each of these functions will load a dataset and return the following data:
+Each of these functions will load a dataset and return the following datasets:
 * The profiling traces and profiling labels (these will be split into training and validation)
 * The attack traces and labels for each possible key guess
 * The actual value of the target key byte

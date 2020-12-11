@@ -75,8 +75,8 @@ class AscadDataLoader_test(Dataset):
             idx = idx.tolist()
 
         trace = self.X_attack[idx]
-        target = self.targets[idx] ##All possible S(key xor x) for all the 256 keys.
-        sample = {'trace': trace, 'target': target}
+        target = self.targets[idx] ##All possible S(key xor x) for all the 256 keys. 256
+        sample = {'trace': trace, 'sensitive': target}
 
         if self.transform:
             sample = self.transform(sample)

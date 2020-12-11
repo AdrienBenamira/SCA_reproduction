@@ -1,13 +1,12 @@
-
 import warnings
 from torchvision import transforms, utils
 from src.DataLoader import AscadDataLoader_train, AscadDataLoader_test
-
 from src.net import Net
 import torch
 import torch.nn as nn
 import torch.optim as optim
-
+import random
+import numpy as np
 from src.Preprocessing import Horizontal_Scaling_0_1, ToTensor, Horizontal_Scaling_m1_1
 
 warnings.filterwarnings('ignore',category=FutureWarning)
@@ -20,6 +19,14 @@ from src.config import Config
 config = Config()
 
 #TODO: seed the pipeline for reproductibility
+seed = config.general.seed
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 #TODO: incorporate the prepocessing of the Github
 compose = transforms.Compose([  ToTensor() ])
@@ -85,7 +92,7 @@ net = Net()
 
 #TODO: propose multiple loss and optimizer
 criterion = nn.MSELoss()
-if config.train.criterion == "Categorical Cross Entropy Loss":
+if config.train.criterion == "CrossEntropyLoss":
     criterion = nn.NLLLoss()
 
 optimizer = optim.SGD(net.parameters(), lr=config.train.lr, momentum=config.train.momentum)
@@ -104,11 +111,13 @@ for epoch in range(config.train.epochs):  # loop over the dataset multiple times
 
         # forward + backward + optimize
         outputs = net(inputs)
+        #print(labels.shape)
+        #print(labels)
         labels = labels.view(4).long() ##This is because NLLLoss only take in this form.
         outputs = torch.log(outputs)
-        print(outputs)
-        print(outputs.shape, labels.shape)
-        print(labels)
+        #print(outputs)
+        #print(outputs.shape, labels.shape)
+        #print(labels)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
