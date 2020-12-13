@@ -10,8 +10,14 @@ dataloader:
   num_workers: 0
   shuffle: True
 
+test_dataloader:
+  scaling: feature_scaling_m1_1
+  batch_size: 10000
+  num_workers: 0
+  shuffle: True
+
 train:
-  criterion: CrossEntropyLoss
+  criterion: Categorical Cross Entropy Loss
   optimizer: Adam
   epochs: 5
   lr: 0.001

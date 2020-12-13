@@ -1,16 +1,22 @@
+
 import warnings
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+import random
+import numpy as np
 from torchvision import transforms, utils
 from src.DataLoader import AscadDataLoader_train, AscadDataLoader_test
 from src.net import Net
+from src.Preprocessing import Horizontal_Scaling_0_1, ToTensor, Horizontal_Scaling_m1_1
+from src.config import Config
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import random
-import numpy as np
-from src.Preprocessing import Horizontal_Scaling_0_1, ToTensor, Horizontal_Scaling_m1_1
+from torch.utils.tensorboard import SummaryWriter
+
 
 warnings.filterwarnings('ignore',category=FutureWarning)
-from src.config import Config
+
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # initiate the parser
@@ -18,7 +24,7 @@ from src.config import Config
 
 config = Config()
 
-#TODO: seed the pipeline for reproductibility
+#Seed the pipeline for reproductibility
 seed = config.general.seed
 random.seed(seed)
 np.random.seed(seed)
@@ -28,13 +34,13 @@ if torch.cuda.is_available():
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-#TODO: incorporate the prepocessing of the Github
+#Incorporate the prepocessing of the Github
 compose = transforms.Compose([  ToTensor() ])
 Horizontal_scale_0_1 = transforms.Compose([  ToTensor(), Horizontal_Scaling_0_1() ])
 Horizontal_scale_m1_1 = transforms.Compose([  ToTensor(), Horizontal_Scaling_m1_1() ])
 #LOAD trainset
 trainset = -1
-
+testset = -1
 if config.dataloader.scaling == "None":
     trainset = AscadDataLoader_train(config, transform=compose)
 
@@ -72,9 +78,9 @@ else:
     testset.feature_scaling()
 
 #testset.to_categorical(num_classes=256)
-testloader = torch.utils.data.DataLoader(testset, batch_size=config.dataloader.batch_size,
-                                         shuffle=config.dataloader.shuffle,
-                                        num_workers=config.dataloader.num_workers)
+testloader = torch.utils.data.DataLoader(testset, batch_size=config.test_dataloader.batch_size,
+                                         shuffle=config.test_dataloader.shuffle,
+                                        num_workers=config.test_dataloader.num_workers)
 # print("Trainset:")
 # for i in range(len(trainset)):
 # #     print(trainset[i])
@@ -86,48 +92,80 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=config.dataloader.b
 #     print(testset[i]["sensitive"])
 
 
+#
+# #TODO: Change the model for the one of the paper
+# net = Net()
+#
+# #TODO: propose multiple loss and optimizer
+# criterion = nn.NLLLoss()
+# optimizer = optim.Adam(net.parameters(), lr=config.train.lr)
+#
+# # TODO: plot in tensorboard the curves loss and accuracy for train and val
+# for epoch in range(config.train.epochs):  # loop over the dataset multiple times
+#     running_loss = 0.0
+#     for i, data in enumerate(trainloader, 0):
+#         # get the inputs; data is a list of [inputs, labels]
+#         inputs, labels = data["trace"].float(), data["sensitive"].float()
+#
+#         # zero the parameter gradients
+#         optimizer.zero_grad()
+#
+#         # forward + backward + optimize
+#         outputs = net(inputs)
+#         labels = labels.view(4).long() ##This is because NLLLoss only take in this form.
+#         outputs = torch.log(outputs)
+#         loss = criterion(outputs, labels)
+#         loss.backward()
+#         optimizer.step()
+#         # print statistics
+#         running_loss += loss.item()
+#
+#         if i % 2000 == 1999:    # print every 2000 mini-batches
+#             print('[%d, %5d] loss: %.3f' %
+#                   (epoch + 1, i + 1, running_loss / 2000))
+#             running_loss = 0.0
+#
+# print('Finished Training')
 
-#TODO: Change the model for the one of the paper
+#Saving trained model and loading model.
+PATH = './model/noConv1D_ascad_desync_50.pth'
+#torch.save(net.state_dict(), PATH)
 net = Net()
+net.load_state_dict(torch.load(PATH))
 
-#TODO: propose multiple loss and optimizer
-criterion = nn.MSELoss()
-if config.train.criterion == "CrossEntropyLoss":
-    criterion = nn.NLLLoss()
 
-optimizer = optim.SGD(net.parameters(), lr=config.train.lr, momentum=config.train.momentum)
-if config.train.optimizer == "Adam":
-    optimizer = optim.Adam(net.parameters(), lr=config.train.lr)
+#Evaluating the model based on the entropy metric
+dataiter = iter(testloader)
+sample = dataiter.next()
+attack_traces, target_labels   = sample["trace"].float(), sample["sensitive"].float()
+predictions = net(attack_traces)
+predictions = torch.log(torch.add(predictions,1e-40))
 
-# TODO: plot in tensorboard the curves loss and accuracy for train and val
-for epoch in range(config.train.epochs):  # loop over the dataset multiple times
-    running_loss = 0.0
-    for i, data in enumerate(trainloader, 0):
-        # get the inputs; data is a list of [inputs, labels]
-        inputs, labels = data["trace"].float(), data["sensitive"].float()
 
-        # zero the parameter gradients
-        optimizer.zero_grad()
 
-        # forward + backward + optimize
-        outputs = net(inputs)
-        #print(labels.shape)
-        #print(labels)
-        labels = labels.view(4).long() ##This is because NLLLoss only take in this form.
-        outputs = torch.log(outputs)
-        #print(outputs)
-        #print(outputs.shape, labels.shape)
-        #print(labels)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-        # print statistics
-        running_loss += loss.item()
 
-        if i % 2000 == 1999:    # print every 2000 mini-batches
-            print('[%d, %5d] loss: %.3f' %
-                  (epoch + 1, i + 1, running_loss / 2000))
-            running_loss = 0.0
+## Rank of the keys
+nattack =100
+ntraces = 300
+interval = 1
+ranks = np.zeros((nattack , int(ntraces/interval)))
+for i in tqdm(range(nattack)):
+    ranks[i] = testset.rank(predictions, ntraces, interval)
 
-print('Finished Training')
+#Plotting the graph of number of traces over rank of the key for the real key.
+fig, ax = plt.subplots(figsize=(15, 7))
+x = [x for x in range(0,ntraces, interval)]
+ax.plot(x, np.mean(ranks, axis=0), 'b')
+
+ax.set(xlabel='Number of traces', ylabel='Mean rank')
+plt.show()
+
+
+writer = SummaryWriter()
+
+for n_iter in range(100):
+    writer.add_scalar('Loss/train', np.random.random(), n_iter)
+    writer.add_scalar('Loss/test', np.random.random(), n_iter)
+    writer.add_scalar('Accuracy/train', np.random.random(), n_iter)
+    writer.add_scalar('Accuracy/test', np.random.random(), n_iter)
 

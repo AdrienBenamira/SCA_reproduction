@@ -83,6 +83,7 @@ class AscadDataLoader_test(Dataset):
 
         return sample
 
+
     def to_categorical(self, num_classes):
         self.targets = np.eye(num_classes, dtype='uint8')[self.targets]
 
@@ -95,19 +96,18 @@ class AscadDataLoader_test(Dataset):
         else:
             self.X_attack = self.feature_scaler.transform(self.X_attack)
 
-    def rank(self, ModelPredictions, key,ntraces, interval = 10):
+    def rank(self, ModelPredictions, ntraces = 300, interval = 1):
         ranktime = np.zeros(int(ntraces / interval))
         pred = np.zeros(256)
 
         idx = np.random.randint(ModelPredictions.shape[0], size=ntraces)
 
         for i, p in enumerate(idx):
-            for k in range(ModelPredictions.shape[1]):
-                pred[k] += ModelPredictions[p, self.targets[p, k]]
+            for k in range(ModelPredictions.shape[1]): #256
+                pred[k] += ModelPredictions[p][self.targets[p, k]]
+
 
             if i % interval == 0:
                 ranked = np.argsort(pred)[::-1]
-                ranktime[int(i / interval)] = list(ranked).index(key)
+                ranktime[int(i / interval)] = list(ranked).index(self.real_key)
         return ranktime
-
-    #TODO: def evualuteModel try to understand what it is doing and how it link with the rank function above.

@@ -36,7 +36,6 @@ class Net(nn.Module): ##noConv1 ascad_desync 50
         x = F.selu(self.fc2(x))
         x = F.selu(self.fc3(x))
         x = F.softmax(x)
-        #print(F.softmax(x))
         return x
 
     def num_flat_features(self, x):
