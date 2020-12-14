@@ -92,13 +92,13 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=config.test_dataloa
 #     print(testset[i]["sensitive"])
 
 
-#
+writer = SummaryWriter("runs/noConv1D_ascad_desync_50_2")
 # #TODO: Change the model for the one of the paper
 # net = Net()
 #
 # #TODO: propose multiple loss and optimizer
 # criterion = nn.NLLLoss()
-# optimizer = optim.Adam(net.parameters(), lr=config.train.lr)
+# optimizer = optim.Adam(net.parameters(), lr=float(config.train.lr))
 #
 # # TODO: plot in tensorboard the curves loss and accuracy for train and val
 # for epoch in range(config.train.epochs):  # loop over the dataset multiple times
@@ -112,7 +112,7 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=config.test_dataloa
 #
 #         # forward + backward + optimize
 #         outputs = net(inputs)
-#         labels = labels.view(4).long() ##This is because NLLLoss only take in this form.
+#         labels = labels.view(int(config.dataloader.batch_size)).long() ##This is because NLLLoss only take in this form.
 #         outputs = torch.log(outputs)
 #         loss = criterion(outputs, labels)
 #         loss.backward()
@@ -120,15 +120,22 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=config.test_dataloa
 #         # print statistics
 #         running_loss += loss.item()
 #
-#         if i % 2000 == 1999:    # print every 2000 mini-batches
+#         if i % 1000 == 999:    # print every 1000 mini-batches
 #             print('[%d, %5d] loss: %.3f' %
-#                   (epoch + 1, i + 1, running_loss / 2000))
+#                   (epoch + 1, i + 1, running_loss / 1000))
+#             writer.add_scalar('training loss',
+#                               running_loss / 1000,
+#                               epoch * len(trainloader) + i)
+#
 #             running_loss = 0.0
 #
 # print('Finished Training')
+#
+
+
 
 #Saving trained model and loading model.
-PATH = './model/noConv1D_ascad_desync_50.pth'
+PATH = './model/noConv1D_ascad_desync_50_1.pth'
 #torch.save(net.state_dict(), PATH)
 net = Net()
 net.load_state_dict(torch.load(PATH))
@@ -149,6 +156,7 @@ nattack =100
 ntraces = 300
 interval = 1
 ranks = np.zeros((nattack , int(ntraces/interval)))
+
 for i in tqdm(range(nattack)):
     ranks[i] = testset.rank(predictions, ntraces, interval)
 
@@ -156,16 +164,8 @@ for i in tqdm(range(nattack)):
 fig, ax = plt.subplots(figsize=(15, 7))
 x = [x for x in range(0,ntraces, interval)]
 ax.plot(x, np.mean(ranks, axis=0), 'b')
-
 ax.set(xlabel='Number of traces', ylabel='Mean rank')
 plt.show()
 
-
-writer = SummaryWriter()
-
-for n_iter in range(100):
-    writer.add_scalar('Loss/train', np.random.random(), n_iter)
-    writer.add_scalar('Loss/test', np.random.random(), n_iter)
-    writer.add_scalar('Accuracy/train', np.random.random(), n_iter)
-    writer.add_scalar('Accuracy/test', np.random.random(), n_iter)
+writer.close()
 

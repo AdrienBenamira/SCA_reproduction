@@ -6,7 +6,7 @@ general:
 
 dataloader:
   scaling: feature_scaling_m1_1
-  batch_size: 4
+  batch_size: 50
   num_workers: 0
   shuffle: True
 
@@ -14,13 +14,13 @@ test_dataloader:
   scaling: feature_scaling_m1_1
   batch_size: 10000
   num_workers: 0
-  shuffle: True
+  shuffle: False
 
 train:
   criterion: Categorical Cross Entropy Loss
   optimizer: Adam
-  epochs: 5
-  lr: 0.001
+  epochs: 50
+  lr: 5e-3
   momentum: 0.9
 
 
