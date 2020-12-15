@@ -96,7 +96,7 @@ class AscadDataLoader_test(Dataset):
         else:
             self.X_attack = self.feature_scaler.transform(self.X_attack)
 
-    def rank(self, ModelPredictions, ntraces = 300, interval = 1):
+    def rank(self, ModelPredictions, ntraces = 300, interval = 10):
         ranktime = np.zeros(int(ntraces / interval))
         pred = np.zeros(256)
 

@@ -92,53 +92,67 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=config.test_dataloa
 #     print(testset[i]["sensitive"])
 
 
-writer = SummaryWriter("runs/noConv1D_ascad_desync_50_2")
-# #TODO: Change the model for the one of the paper
-# net = Net()
-#
-# #TODO: propose multiple loss and optimizer
-# criterion = nn.NLLLoss()
-# optimizer = optim.Adam(net.parameters(), lr=float(config.train.lr))
-#
-# # TODO: plot in tensorboard the curves loss and accuracy for train and val
-# for epoch in range(config.train.epochs):  # loop over the dataset multiple times
-#     running_loss = 0.0
-#     for i, data in enumerate(trainloader, 0):
-#         # get the inputs; data is a list of [inputs, labels]
-#         inputs, labels = data["trace"].float(), data["sensitive"].float()
-#
-#         # zero the parameter gradients
-#         optimizer.zero_grad()
-#
-#         # forward + backward + optimize
-#         outputs = net(inputs)
-#         labels = labels.view(int(config.dataloader.batch_size)).long() ##This is because NLLLoss only take in this form.
-#         outputs = torch.log(outputs)
-#         loss = criterion(outputs, labels)
-#         loss.backward()
-#         optimizer.step()
-#         # print statistics
-#         running_loss += loss.item()
-#
-#         if i % 1000 == 999:    # print every 1000 mini-batches
-#             print('[%d, %5d] loss: %.3f' %
-#                   (epoch + 1, i + 1, running_loss / 1000))
-#             writer.add_scalar('training loss',
-#                               running_loss / 1000,
-#                               epoch * len(trainloader) + i)
-#
-#             running_loss = 0.0
-#
-# print('Finished Training')
-#
+writer = SummaryWriter("runs/noConv1D_ascad_desync_50_3")
+#TODO: Change the model for the one of the paper
+net = Net()
+
+#TODO: propose NLLloss (Categorical Cross Entropy), Adam optimizer and Cyclic Learning Rate
+criterion = nn.NLLLoss()
+optimizer = optim.Adam(net.parameters(), lr=float(config.train.lr))
+print(len(trainloader))
+
+scheduler = optim.lr_scheduler.OneCycleLR(optimizer, max_lr = float(config.train.lr), epochs = 50, steps_per_epoch=len(trainloader))
+# TODO: plot in tensorboard the curves loss and accuracy for train and val
+for epoch in range(config.train.epochs):  # loop over the dataset multiple times
+    running_loss = 0.0
+    for i, data in enumerate(trainloader, 0):
+        # get the inputs; data is a list of [inputs, labels]
+        inputs, labels = data["trace"].float(), data["sensitive"].float()
+
+        # zero the parameter gradients
+        optimizer.zero_grad()
+
+        # forward + backward + optimize
+        outputs = net(inputs)
+        labels = labels.view(int(config.dataloader.batch_size)).long() ##This is because NLLLoss only take in this form.
+        outputs = torch.log(outputs)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        # print statistics
+        running_loss += loss.item()
+        if i % 1000 == 999:    # print every 1000 mini-batches
+            print('[%d, %5d] loss: %.3f' %
+                  (epoch + 1, i + 1, running_loss / 1000))
+            writer.add_scalar('training loss',
+                              running_loss / 1000,
+                              epoch * len(trainloader) + i)
+
+            running_loss = 0.0
+    ## Update the learning rate.
+    scheduler.step()
+
+
+
+
+
+print('Finished Training')
+
 
 
 
 #Saving trained model and loading model.
-PATH = './model/noConv1D_ascad_desync_50_1.pth'
-#torch.save(net.state_dict(), PATH)
+PATH = './model/noConv1D_ascad_desync_50_3.pth'
+torch.save(net.state_dict(), PATH)
 net = Net()
 net.load_state_dict(torch.load(PATH))
+
+
+
+traindataiter = iter(trainloader)
+sample = traindataiter.next()
+traces, label = sample["trace"].float(), sample["sensitive"].float()
 
 
 #Evaluating the model based on the entropy metric
@@ -153,19 +167,22 @@ predictions = torch.log(torch.add(predictions,1e-40))
 
 ## Rank of the keys
 nattack =100
-ntraces = 300
+ntraces = 400
 interval = 1
 ranks = np.zeros((nattack , int(ntraces/interval)))
 
 for i in tqdm(range(nattack)):
     ranks[i] = testset.rank(predictions, ntraces, interval)
-
+ranklist = np.mean(ranks, axis=0)
+print(ranklist)
 #Plotting the graph of number of traces over rank of the key for the real key.
 fig, ax = plt.subplots(figsize=(15, 7))
 x = [x for x in range(0,ntraces, interval)]
 ax.plot(x, np.mean(ranks, axis=0), 'b')
 ax.set(xlabel='Number of traces', ylabel='Mean rank')
 plt.show()
+
+
 
 writer.close()
 
